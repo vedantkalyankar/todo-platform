@@ -15,3 +15,5 @@ htmlcov/
 .idea/
 
 db.sqlite3
+
+nginx/certs/
