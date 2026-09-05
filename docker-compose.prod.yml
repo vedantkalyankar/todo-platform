@@ -1,0 +1,77 @@
+services:
+
+  web:
+    build:
+      context: .
+    restart: unless-stopped
+    command: >
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --timeout 60
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: .
+    restart: unless-stopped
+    command: celery -A config worker --loglevel=INFO
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  beat:
+    build:
+      context: .
+    restart: unless-stopped
+    command: >
+      celery -A config beat
+      --loglevel=INFO
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$DB_USER -d $$DB_NAME"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
