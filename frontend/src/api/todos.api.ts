@@ -14,6 +14,13 @@ export interface TodoQueryParams {
   ordering?: string;
 }
 
+export interface TodoStats {
+  total: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+}
+
 export const getTodos = async (
   params?: TodoQueryParams,
 ): Promise<PaginatedResponse<Todo>> => {
@@ -22,6 +29,11 @@ export const getTodos = async (
     { params },
   );
 
+  return response.data;
+};
+
+export const getTodoStats = async (): Promise<TodoStats> => {
+  const response = await api.get<TodoStats>("/todos/stats/");
   return response.data;
 };
 

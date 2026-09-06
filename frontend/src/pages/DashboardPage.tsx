@@ -4,9 +4,11 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   createTodo,
   deleteTodo,
+  getTodoStats,
   getTodos,
   updateTodo,
 } from "../api/todos.api";
@@ -36,6 +38,17 @@ const emptyForm: TodoFormState = {
 
 export function DashboardPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [stats, setStats] = useState({
+  total: 0,
+  pending: 0,
+  in_progress: 0,
+  completed: 0,
+});
+const [searchParams] = useSearchParams();
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPreviousPage, setHasPreviousPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,24 +57,43 @@ export function DashboardPage() {
   const [form, setForm] = useState<TodoFormState>(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
   const [actionTodoId, setActionTodoId] = useState<string | null>(null);
-
+  const statusFilter = searchParams.get("status") as
+  | TodoStatus
+  | null;
   const loadTodos = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  try {
+    setIsLoading(true);
+    setError(null);
 
-      const response = await getTodos();
-      setTodos(response.results);
-    } catch {
-      setError("Unable to load your todos.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const [todosResponse, statsResponse] = await Promise.all([
+      getTodos({
+        page,
+        ...(statusFilter
+          ? { status: statusFilter }
+          : {}),
+      }),
+      getTodoStats(),
+    ]);
+
+    setTodos(todosResponse.results);
+    setStats(statsResponse);
+
+    setTotalCount(todosResponse.count);
+    setHasNextPage(Boolean(todosResponse.next));
+    setHasPreviousPage(Boolean(todosResponse.previous));
+  } catch {
+    setError("Unable to load your todos.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+  useEffect(() => {
+  void loadTodos();
+  }, [page, statusFilter]);
 
   useEffect(() => {
-    void loadTodos();
-  }, []);
+  setPage(1);
+}, [statusFilter]);
 
   const openCreateModal = () => {
     setEditingTodo(null);
@@ -213,18 +245,10 @@ export function DashboardPage() {
       setActionTodoId(null);
     }
   };
-
-  const completed = todos.filter(
-    (todo) => todo.status === "completed",
-  ).length;
-
-  const pending = todos.filter(
-    (todo) => todo.status === "pending",
-  ).length;
-
-  const inProgress = todos.filter(
-    (todo) => todo.status === "in_progress",
-  ).length;
+const total = stats.total;
+const completed = stats.completed;
+const pending = stats.pending;
+const inProgress = stats.in_progress;
 
   return (
     <>
@@ -254,7 +278,7 @@ export function DashboardPage() {
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="Total" value={todos.length} />
+          <Stat label="Total" value={total} />
           <Stat label="Pending" value={pending} />
           <Stat label="In Progress" value={inProgress} />
           <Stat label="Completed" value={completed} />
@@ -273,7 +297,7 @@ export function DashboardPage() {
             </h2>
 
             <span className="text-sm text-[#616061] dark:text-[#9b9b9b]">
-              {todos.length} items
+              {totalCount} items
             </span>
           </div>
 
@@ -324,6 +348,31 @@ export function DashboardPage() {
         </section>
       </div>
 
+      <div className="mt-4 flex items-center justify-between">
+      <p className="text-sm text-[#616061] dark:text-[#9b9b9b]">
+        Page {page}
+      </p>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!hasPreviousPage || isLoading}
+          onClick={() => setPage((current) => current - 1)}
+          className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
+        >
+          Previous
+        </button>
+
+        <button
+          type="button"
+          disabled={!hasNextPage || isLoading}
+          onClick={() => setPage((current) => current + 1)}
+          className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
+        >
+          Next
+        </button>
+      </div>
+    </div>
       {isModalOpen && (
         <TodoModal
           editingTodo={editingTodo}
