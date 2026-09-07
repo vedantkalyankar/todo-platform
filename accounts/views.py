@@ -7,7 +7,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
 
-from .serializers import RegisterSerializer, UserSerializer, LogoutSerializer
+from .serializers import (
+    RegisterSerializer,
+    UserSerializer,
+    ProfileSerializer,
+    LogoutSerializer,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,28 @@ class MeView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+@extend_schema(
+    request=ProfileSerializer,
+    responses=UserSerializer,
+)
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def patch(self, request):
+        serializer = ProfileSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+        )
+
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return Response(
+            UserSerializer(user).data,
+        )
+        
+        
 @extend_schema(
     request=LogoutSerializer,
     responses={204: None},

@@ -13,6 +13,8 @@ import {
   login as loginApi,
   logout as logoutApi,
   register as registerApi,
+  updateProfile as updateProfileApi,
+  type UpdateProfileRequest,
 } from "../api/auth.api";
 
 import {
@@ -34,6 +36,9 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
+  updateProfile: (
+    data: UpdateProfileRequest,
+  ) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -104,6 +109,15 @@ export function AuthProvider({
     [login],
   );
 
+
+  const updateProfile = useCallback(
+    async (data: UpdateProfileRequest) => {
+      const updatedUser = await updateProfileApi(data);
+      setUser(updatedUser);
+    },
+    [],
+  );
+
   const logout = useCallback(async () => {
     const refreshToken = getRefreshToken();
 
@@ -126,6 +140,7 @@ export function AuthProvider({
       isLoading,
       login,
       register,
+      updateProfile,
       logout,
     }),
     [
@@ -134,6 +149,7 @@ export function AuthProvider({
       isLoading,
       login,
       register,
+      updateProfile,
       logout,
     ],
   );

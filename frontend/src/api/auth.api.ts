@@ -26,6 +26,23 @@ export const getCurrentUser = async (): Promise<User> => {
   return response.data;
 };
 
+export interface UpdateProfileRequest {
+  username?: string;
+  email?: string;
+  password?: string;
+}
+
+export const updateProfile = async (
+  data: UpdateProfileRequest,
+): Promise<User> => {
+  const response = await api.patch<User>(
+    "/auth/profile/",
+    data,
+  );
+
+  return response.data;
+};
+
 export const refreshToken = async (
   refresh: string,
 ): Promise<TokenResponse> => {

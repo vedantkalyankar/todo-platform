@@ -3,6 +3,9 @@ export interface User {
   username: string;
   email: string;
   created_at: string;
+  username_change_available_at: string | null;
+  email_change_available_at: string | null;
+  password_change_available_at: string | null;
 }
 
 export interface LoginRequest {
