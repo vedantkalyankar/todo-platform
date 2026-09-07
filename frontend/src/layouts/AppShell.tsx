@@ -1,17 +1,18 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useSearchParams } from "react-router-dom";
 import { useTheme } from "../auth/ThemeContext";
 
 
 export function AppShell() {
-const { resolvedTheme, setTheme } = useTheme();
-
-const toggleTheme = () => {
-  setTheme(
-    resolvedTheme === "dark"
-      ? "light"
-      : "dark",
-  );
-};
+  const { resolvedTheme, setTheme } = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("search") ?? "";
+  const toggleTheme = () => {
+    setTheme(
+      resolvedTheme === "dark"
+        ? "light"
+        : "dark",
+    );
+  };
 
   return (
     <div
@@ -52,10 +53,9 @@ const toggleTheme = () => {
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `block rounded-md px-3 py-2 text-sm transition ${
-                  isActive
-                    ? "bg-[#1164a3] text-white"
-                    : "text-gray-300 hover:bg-white/10 hover:text-white"
+                `block rounded-md px-3 py-2 text-sm transition ${isActive
+                  ? "bg-[#1164a3] text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }`
               }
             >
@@ -115,6 +115,18 @@ const toggleTheme = () => {
               <input
                 type="text"
                 placeholder="Search todos..."
+                value={search}
+                onChange={(event) => {
+                  const value = event.target.value;
+
+                  if (value) {
+                    searchParams.set("search", value);
+                  } else {
+                    searchParams.delete("search");
+                  }
+
+                  setSearchParams(searchParams);
+                }}
                 className="w-full bg-transparent py-2 text-sm text-white outline-none placeholder:text-gray-500"
               />
             </div>

@@ -39,12 +39,12 @@ const emptyForm: TodoFormState = {
 export function DashboardPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [stats, setStats] = useState({
-  total: 0,
-  pending: 0,
-  in_progress: 0,
-  completed: 0,
-});
-const [searchParams] = useSearchParams();
+    total: 0,
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+  });
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -58,42 +58,46 @@ const [searchParams] = useSearchParams();
   const [isSaving, setIsSaving] = useState(false);
   const [actionTodoId, setActionTodoId] = useState<string | null>(null);
   const statusFilter = searchParams.get("status") as
-  | TodoStatus
-  | null;
+    | TodoStatus
+    | null;
+  const search = searchParams.get("search") ?? "";
   const loadTodos = async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
+    try {
+      setIsLoading(true);
+      setError(null);
 
-    const [todosResponse, statsResponse] = await Promise.all([
-      getTodos({
-        page,
-        ...(statusFilter
-          ? { status: statusFilter }
-          : {}),
-      }),
-      getTodoStats(),
-    ]);
+      const [todosResponse, statsResponse] = await Promise.all([
+        getTodos({
+          page,
+          ...(statusFilter
+            ? { status: statusFilter }
+            : {}),
+          ...(search
+            ? { search }
+            : {}),
+        }),
+        getTodoStats(),
+      ]);
 
-    setTodos(todosResponse.results);
-    setStats(statsResponse);
+      setTodos(todosResponse.results);
+      setStats(statsResponse);
 
-    setTotalCount(todosResponse.count);
-    setHasNextPage(Boolean(todosResponse.next));
-    setHasPreviousPage(Boolean(todosResponse.previous));
-  } catch {
-    setError("Unable to load your todos.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setTotalCount(todosResponse.count);
+      setHasNextPage(Boolean(todosResponse.next));
+      setHasPreviousPage(Boolean(todosResponse.previous));
+    } catch {
+      setError("Unable to load your todos.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-  void loadTodos();
-  }, [page, statusFilter]);
+    void loadTodos();
+  }, [page, statusFilter, search]);
 
   useEffect(() => {
-  setPage(1);
-}, [statusFilter]);
+    setPage(1);
+  }, [statusFilter, search]);
 
   const openCreateModal = () => {
     setEditingTodo(null);
@@ -245,10 +249,10 @@ const [searchParams] = useSearchParams();
       setActionTodoId(null);
     }
   };
-const total = stats.total;
-const completed = stats.completed;
-const pending = stats.pending;
-const inProgress = stats.in_progress;
+  const total = stats.total;
+  const completed = stats.completed;
+  const pending = stats.pending;
+  const inProgress = stats.in_progress;
 
   return (
     <>
@@ -349,30 +353,30 @@ const inProgress = stats.in_progress;
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-      <p className="text-sm text-[#616061] dark:text-[#9b9b9b]">
-        Page {page}
-      </p>
+        <p className="text-sm text-[#616061] dark:text-[#9b9b9b]">
+          Page {page}
+        </p>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={!hasPreviousPage || isLoading}
-          onClick={() => setPage((current) => current - 1)}
-          className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
-        >
-          Previous
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={!hasPreviousPage || isLoading}
+            onClick={() => setPage((current) => current - 1)}
+            className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
+          >
+            Previous
+          </button>
 
-        <button
-          type="button"
-          disabled={!hasNextPage || isLoading}
-          onClick={() => setPage((current) => current + 1)}
-          className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
-        >
-          Next
-        </button>
+          <button
+            type="button"
+            disabled={!hasNextPage || isLoading}
+            onClick={() => setPage((current) => current + 1)}
+            className="rounded-md border border-[#ccc] bg-white px-3 py-2 text-sm font-medium text-[#1d1c1d] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#222529] dark:text-white"
+          >
+            Next
+          </button>
+        </div>
       </div>
-    </div>
       {isModalOpen && (
         <TodoModal
           editingTodo={editingTodo}
@@ -452,11 +456,10 @@ function TodoRow({
 
         <div className="min-w-0 flex-1">
           <h3
-            className={`font-medium ${
-              todo.status === "completed"
-                ? "text-[#888] line-through"
-                : "text-[#1d1c1d] dark:text-white"
-            }`}
+            className={`font-medium ${todo.status === "completed"
+              ? "text-[#888] line-through"
+              : "text-[#1d1c1d] dark:text-white"
+              }`}
           >
             {todo.title}
           </h3>
