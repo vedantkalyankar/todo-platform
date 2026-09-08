@@ -22,6 +22,22 @@ class User(AbstractUser):
         blank=True,
     )
 
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        null=True,
+        blank=True,
+    )
+
+    avatar_type = models.CharField(
+        max_length=20,
+        default="default",
+    )
+
+    avatar_key = models.CharField(
+        max_length=50,
+        default="default-1",
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )

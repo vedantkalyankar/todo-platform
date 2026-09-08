@@ -33,9 +33,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError(
-                {
-                    "password_confirm": "Passwords do not match."
-                }
+                {"password_confirm": "Passwords do not match."}
             )
 
         return attrs
@@ -65,6 +63,9 @@ class UserSerializer(serializers.ModelSerializer):
             "username_change_available_at",
             "email_change_available_at",
             "password_change_available_at",
+            "avatar",
+            "avatar_type",
+            "avatar_key",
         )
         read_only_fields = (
             "id",
@@ -72,6 +73,9 @@ class UserSerializer(serializers.ModelSerializer):
             "username_change_available_at",
             "email_change_available_at",
             "password_change_available_at",
+            "avatar",
+            "avatar_type",
+            "avatar_key",
         )
 
     def get_username_change_available_at(self, obj):
@@ -91,8 +95,8 @@ class UserSerializer(serializers.ModelSerializer):
             return None
 
         return obj.password_changed_at + timedelta(days=30)
-    
-    
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -112,9 +116,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         value = value.strip()
 
         if not value:
-            raise serializers.ValidationError(
-                "Username cannot be empty."
-            )
+            raise serializers.ValidationError("Username cannot be empty.")
 
         return value
 
@@ -126,42 +128,27 @@ class ProfileSerializer(serializers.ModelSerializer):
         now = timezone.now()
 
         if "username" in attrs and attrs["username"] != user.username:
-            if (
-                user.username_changed_at
-                and now < user.username_changed_at + timedelta(days=30)
+            if user.username_changed_at and now < user.username_changed_at + timedelta(
+                days=30
             ):
                 raise serializers.ValidationError(
-                    {
-                        "username": (
-                            "Username cannot be changed again for 30 days."
-                        )
-                    }
+                    {"username": ("Username cannot be changed again for 30 days.")}
                 )
 
         if "email" in attrs and attrs["email"] != user.email:
-            if (
-                user.email_changed_at
-                and now < user.email_changed_at + timedelta(days=30)
+            if user.email_changed_at and now < user.email_changed_at + timedelta(
+                days=30
             ):
                 raise serializers.ValidationError(
-                    {
-                        "email": (
-                            "Email cannot be changed again for 30 days."
-                        )
-                    }
+                    {"email": ("Email cannot be changed again for 30 days.")}
                 )
 
         if "password" in attrs:
-            if (
-                user.password_changed_at
-                and now < user.password_changed_at + timedelta(days=30)
+            if user.password_changed_at and now < user.password_changed_at + timedelta(
+                days=30
             ):
                 raise serializers.ValidationError(
-                    {
-                        "password": (
-                            "Password cannot be changed again for 30 days."
-                        )
-                    }
+                    {"password": ("Password cannot be changed again for 30 days.")}
                 )
 
         return attrs
@@ -175,8 +162,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         )
 
         email_changed = (
-            "email" in validated_data
-            and validated_data["email"] != instance.email
+            "email" in validated_data and validated_data["email"] != instance.email
         )
 
         password_changed = "password" in validated_data
@@ -197,5 +183,122 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    ALLOWED_DEFAULT_AVATARS = {
+        "bamboo-stick-svgrepo-com",
+        "branches-with-leaves-svgrepo-com",
+        "butter-knife-svgrepo-com",
+        "chinese-paper-writing-svgrepo-com",
+        "dish-and-toothpick-svgrepo-com",
+        "fertilizer-svgrepo-com",
+        "gong-svgrepo-com",
+        "japan-food-svgrepo-com",
+        "japanese-bird-svgrepo-com",
+        "japanese-character-svgrepo-com",
+        "japanese-circular-symbol-svgrepo-com",
+        "japanese-flower-svgrepo-com",
+        "japanese-hand-fan-svgrepo-com",
+        "japanese-ornament-svgrepo-com",
+        "japanese-pagoda-svgrepo-com",
+        "japanese-tea-pot-svgrepo-com",
+        "japanese-yen-paper-bill-svgrepo-com",
+        "kamon-japanese-svgrepo-com",
+        "kanagawa-japan-kanji-svgrepo-com",
+        "miyagi-prefecture-svgrepo-com",
+        "n-logo-svgrepo-com",
+        "origami-swan-svgrepo-com",
+        "ornament-japan-flowers-svgrepo-com",
+        "radish-svgrepo-com",
+        "speed-limit-100-svgrepo-com",
+        "tottori-japanese-flag-symbol-svgrepo-com",
+    }
+
+    avatar_type = serializers.ChoiceField(
+        choices=("default", "custom"),
+        required=False,
+    )
+
+    avatar_key = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "avatar",
+            "avatar_type",
+            "avatar_key",
+        )
+
+    def validate_avatar(self, value):
+        max_size = 5 * 1024 * 1024
+
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                "Avatar image must be 5 MB or smaller."
+            )
+
+        allowed_types = {
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        }
+
+        if value.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                "Only JPG, JPEG, PNG, and WebP images are allowed."
+            )
+
+        return value
+
+    def validate(self, attrs):
+        avatar_type = attrs.get("avatar_type")
+        avatar_key = attrs.get("avatar_key")
+        avatar = attrs.get("avatar")
+
+        if avatar_type == "default":
+            if avatar_key not in self.ALLOWED_DEFAULT_AVATARS:
+                raise serializers.ValidationError(
+                    {
+                        "avatar_key": "Invalid default avatar."
+                    }
+                )
+
+            if avatar:
+                raise serializers.ValidationError(
+                    {
+                        "avatar": (
+                            "Custom image cannot be provided "
+                            "for a default avatar."
+                        )
+                    }
+                )
+
+        if avatar_type == "custom":
+            if not avatar:
+                raise serializers.ValidationError(
+                    {
+                        "avatar": (
+                            "Avatar image is required "
+                            "for a custom avatar."
+                        )
+                    }
+                )
+
+            if avatar_key not in (None, ""):
+                raise serializers.ValidationError(
+                    {
+                        "avatar_key": (
+                            "Custom avatars cannot have "
+                            "an avatar key."
+                        )
+                    }
+                )
+
+        return attrs

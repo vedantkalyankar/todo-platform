@@ -12,8 +12,8 @@ from .serializers import (
     UserSerializer,
     ProfileSerializer,
     LogoutSerializer,
+    AvatarSerializer,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ class MeView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+
 @extend_schema(
     request=ProfileSerializer,
     responses=UserSerializer,
@@ -61,8 +62,66 @@ class ProfileView(APIView):
         return Response(
             UserSerializer(user).data,
         )
-        
-        
+
+
+@extend_schema(
+    request=AvatarSerializer,
+    responses=UserSerializer,
+)
+class AvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AvatarSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        avatar_type = serializer.validated_data.get(
+            "avatar_type",
+            "custom",
+        )
+
+        if avatar_type == "default":
+            user = request.user
+
+            if user.avatar:
+                user.avatar.delete(save=False)
+
+            user.avatar = None
+            user.avatar_type = "default"
+            user.avatar_key = serializer.validated_data["avatar_key"]
+            user.save()
+
+        else:
+            user = serializer.save(
+                avatar_type="custom",
+                avatar_key="",
+            )
+
+        return Response(
+            UserSerializer(user).data,
+        )
+
+    def delete(self, request):
+        user = request.user
+
+        if user.avatar:
+            user.avatar.delete(save=False)
+
+        user.avatar = None
+        user.avatar_type = "default"
+        user.avatar_key = "default-1"
+        user.save()
+
+        return Response(
+            UserSerializer(user).data,
+        )
+
+
 @extend_schema(
     request=LogoutSerializer,
     responses={204: None},

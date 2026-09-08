@@ -59,3 +59,40 @@ export const logout = async (
 ): Promise<void> => {
   await api.post("/auth/logout/", data);
 };
+
+export const uploadAvatar = async (
+  file: File,
+): Promise<User> => {
+  const formData = new FormData();
+
+  formData.append("avatar", file);
+
+  const response = await api.post<User>(
+    "/auth/profile/avatar/",
+    formData,
+  );
+
+  return response.data;
+};
+
+export const setDefaultAvatar = async (
+  avatarKey: string,
+): Promise<User> => {
+  const response = await api.post<User>(
+    "/auth/profile/avatar/",
+    {
+      avatar_type: "default",
+      avatar_key: avatarKey,
+    },
+  );
+
+  return response.data;
+};
+
+export const removeAvatar = async (): Promise<User> => {
+  const response = await api.delete<User>(
+    "/auth/profile/avatar/",
+  );
+
+  return response.data;
+};

@@ -6,6 +6,9 @@ export interface User {
   username_change_available_at: string | null;
   email_change_available_at: string | null;
   password_change_available_at: string | null;
+  avatar: string | null;
+  avatar_type: "default" | "custom";
+  avatar_key: string;
 }
 
 export interface LoginRequest {

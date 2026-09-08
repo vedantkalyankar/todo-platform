@@ -9,9 +9,45 @@ import { useAuth } from "../auth/AuthContext";
 
 
 export function AppShell() {
-  const { user, updateProfile } = useAuth();
+  const {
+    user,
+    updateProfile,
+    setDefaultAvatar,
+    uploadAvatar,
+  } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
+  const [isAvatarOpen, setIsAvatarOpen] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const defaultAvatars = [
+    "/avatars/bamboo-stick-svgrepo-com.svg",
+    "/avatars/branches-with-leaves-svgrepo-com.svg",
+    "/avatars/butter-knife-svgrepo-com.svg",
+    "/avatars/chinese-paper-writing-svgrepo-com.svg",
+    "/avatars/dish-and-toothpick-svgrepo-com.svg",
+    "/avatars/fertilizer-svgrepo-com.svg",
+    "/avatars/gong-svgrepo-com.svg",
+    "/avatars/japan-food-svgrepo-com.svg",
+    "/avatars/japanese-bird-svgrepo-com.svg",
+    "/avatars/japanese-character-svgrepo-com.svg",
+    "/avatars/japanese-circular-symbol-svgrepo-com.svg",
+    "/avatars/japanese-flower-svgrepo-com.svg",
+    "/avatars/japanese-hand-fan-svgrepo-com.svg",
+    "/avatars/japanese-ornament-svgrepo-com.svg",
+    "/avatars/japanese-pagoda-svgrepo-com.svg",
+    "/avatars/japanese-tea-pot-svgrepo-com.svg",
+    "/avatars/japanese-yen-paper-bill-svgrepo-com.svg",
+    "/avatars/kamon-japanese-svgrepo-com.svg",
+    "/avatars/kanagawa-japan-kanji-svgrepo-com.svg",
+    "/avatars/miyagi-prefecture-svgrepo-com.svg",
+    "/avatars/n-logo-svgrepo-com.svg",
+    "/avatars/origami-swan-svgrepo-com.svg",
+    "/avatars/ornament-japan-flowers-svgrepo-com.svg",
+    "/avatars/radish-svgrepo-com.svg",
+    "/avatars/speed-limit-100-svgrepo-com.svg",
+    "/avatars/tottori-japanese-flag-symbol-svgrepo-com.svg",
+  ];
   const [profileUsername, setProfileUsername] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePassword, setProfilePassword] = useState("");
@@ -34,6 +70,36 @@ export function AppShell() {
     );
   };
 
+  const avatarInitial = user?.username?.trim().charAt(0).toUpperCase() || "U";
+  const handleAvatarSave = async () => {
+    try {
+      if (avatarFile) {
+        await uploadAvatar(avatarFile);
+      } else if (selectedAvatar) {
+        const avatarKey = selectedAvatar
+          .split("/")
+          .pop()
+          ?.replace(".svg", "");
+
+        if (!avatarKey) {
+          return;
+        }
+
+        await setDefaultAvatar(avatarKey);
+      }
+
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setSelectedAvatar(null);
+      setIsAvatarOpen(false);
+    } catch (error) {
+      console.error("Failed to save avatar:", error);
+    }
+  };
+  const currentAvatarPath =
+  user?.avatar_type === "default" && user?.avatar_key
+    ? `/avatars/${user.avatar_key}.svg`
+    : null;
   return (
     <div
       className={
@@ -170,9 +236,28 @@ export function AppShell() {
                 {user?.username ?? "User"}
               </button>
 
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#611f69] text-sm font-semibold text-white">
-                T
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsAvatarOpen(true)}
+                className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#611f69] text-sm font-semibold text-white"
+                aria-label="Open avatar settings"
+              >
+                {user?.avatar_type === "default" && user?.avatar_key ? (
+                  <img
+                    src={`/avatars/${user.avatar_key}.svg`}
+                    alt="User avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="User avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  avatarInitial
+                )}
+              </button>
             </div>
           </header>
 
@@ -384,6 +469,137 @@ export function AppShell() {
           </section>
         </main>
       </div>
+      {isAvatarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#19171d] p-6 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                Avatar Settings
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setIsAvatarOpen(false)}
+                className="text-xl text-gray-400 hover:text-white"
+                aria-label="Close avatar settings"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#611f69] text-3xl font-semibold text-white">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : selectedAvatar ? (
+                  <img
+                    src={selectedAvatar}
+                    alt="Selected avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : user?.avatar_type === "default" && user?.avatar_key ? (
+                  <img
+                    src={`/avatars/${user.avatar_key}.svg`}
+                    alt="Current avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Current avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  avatarInitial
+                )}
+              </div>
+
+              <p className="text-sm text-gray-400">
+                Choose your avatar
+              </p>
+              <div className="mt-4 w-full">
+                <p className="mb-3 text-sm font-medium text-white">
+                  Built-in avatars
+                </p>
+
+                <div className="grid grid-cols-5 gap-3">
+                  {defaultAvatars.map((avatar) => (
+                    <button
+                      key={avatar}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAvatar(avatar);
+                        setAvatarFile(null);
+                        setAvatarPreview(null);
+                      }}
+                      className={`overflow-hidden rounded-full border-2 ${(selectedAvatar ?? currentAvatarPath) === avatar
+                        ? "border-white"
+                        : "border-transparent"
+                        }`}
+                      aria-label={`Select ${avatar}`}
+                    >
+                      <img
+                        src={avatar}
+                        alt=""
+                        className="aspect-square w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+
+                  setAvatarFile(file);
+                  setSelectedAvatar(null);
+                  if (!file) {
+                    setAvatarPreview(null);
+                    return;
+                  }
+
+                  const reader = new FileReader();
+
+                  reader.onload = () => {
+                    if (typeof reader.result === "string") {
+                      setAvatarPreview(reader.result);
+                    }
+                  };
+
+                  reader.readAsDataURL(file);
+                }}
+                className="mt-4 w-full text-sm text-gray-300"
+              />
+
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsAvatarOpen(false)}
+                className="rounded-md bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAvatarSave}
+                disabled={!avatarFile && !selectedAvatar}
+                className="rounded-md bg-[#611f69] px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,9 @@ import {
   logout as logoutApi,
   register as registerApi,
   updateProfile as updateProfileApi,
+  uploadAvatar as uploadAvatarApi,
+  removeAvatar as removeAvatarApi,
+  setDefaultAvatar as setDefaultAvatarApi,
   type UpdateProfileRequest,
 } from "../api/auth.api";
 
@@ -39,6 +42,14 @@ interface AuthContextValue {
   updateProfile: (
     data: UpdateProfileRequest,
   ) => Promise<void>;
+  uploadAvatar: (
+    file: File,
+  ) => Promise<void>;
+  setDefaultAvatar: (
+    avatarKey: string,
+  ) => Promise<void>;
+
+  removeAvatar: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -109,7 +120,27 @@ export function AuthProvider({
     [login],
   );
 
-
+  const uploadAvatar = useCallback(
+    async (file: File) => {
+      const updatedUser = await uploadAvatarApi(file);
+      setUser(updatedUser);
+    },
+    [],
+  );
+  const setDefaultAvatar = useCallback(
+    async (avatarKey: string) => {
+      const updatedUser = await setDefaultAvatarApi(avatarKey);
+      setUser(updatedUser);
+    },
+    [],
+  );
+  const removeAvatar = useCallback(
+    async () => {
+      const updatedUser = await removeAvatarApi();
+      setUser(updatedUser);
+    },
+    [],
+  );
   const updateProfile = useCallback(
     async (data: UpdateProfileRequest) => {
       const updatedUser = await updateProfileApi(data);
@@ -142,6 +173,9 @@ export function AuthProvider({
       register,
       updateProfile,
       logout,
+      uploadAvatar,
+      setDefaultAvatar,
+      removeAvatar,
     }),
     [
       user,
@@ -151,6 +185,9 @@ export function AuthProvider({
       register,
       updateProfile,
       logout,
+      uploadAvatar,
+      setDefaultAvatar,
+      removeAvatar,
     ],
   );
 
