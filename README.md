@@ -739,7 +739,7 @@ See the [`LICENSE`](LICENSE) file for the complete license text.
 
 # Author
 
-**<YOUR NAME>**
+**Vedant Kalyankar**
 
 `GitHub:` https://www.github.com/vedantkalyankar
 
