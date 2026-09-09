@@ -1,1351 +1,731 @@
 # Todo Platform
 
-A production-oriented **Todo Management Platform** built with Django REST Framework, PostgreSQL, Redis, Celery, Docker, and Nginx.
+A production-oriented full-stack Todo application built with **Django REST Framework** and **React + Vite**. The project includes JWT authentication, task management, PostgreSQL, Redis, Celery background processing, Docker, Docker Compose, and Nginx.
 
-The project demonstrates how to design, develop, containerize, and run a modern backend application using a production-style architecture with asynchronous task processing, JWT authentication, PostgreSQL persistence, Redis, reverse proxying, and HTTPS.
+The repository contains both the Django backend and React frontend in a single project.
 
 ---
 
-## Features
+## Tech Stack
 
-* User registration and authentication
-* JWT-based authentication
-* Access and refresh tokens
-* Token rotation and blacklisting
-* Todo CRUD operations
-* User-specific todo management
-* PostgreSQL database
-* Redis caching/message broker
-* Celery asynchronous task processing
-* Celery Beat scheduled tasks
+### Backend
+
+* Python
+* Django
 * Django REST Framework
-* API filtering, searching, ordering, and pagination
+* Simple JWT
+* PostgreSQL
+* Redis
+* Celery
+* Django Celery Beat
+* Gunicorn
+* Nginx
+* Docker
+* Docker Compose
+
+### Frontend
+
+* React
+* TypeScript
+* Vite
+* Axios
+* CSS
+* Context API
+
+---
+
+## Project Structure
+
+```text
+todo-platform/
+│
+├── accounts/                       # User authentication and account management
+├── todos/                          # Todo application
+│
+├── config/                         # Django project configuration
+│   └── settings/
+│       ├── base.py
+│       ├── development.py
+│       └── production.py
+│
+├── docker/                         # Docker-related configuration
+├── nginx/                          # Nginx configuration
+│
+├── frontend/                       # React + Vite frontend
+│   │
+│   ├── public/
+│   │   ├── avatars/
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   │
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── auth.api.ts
+│   │   │   ├── client.ts
+│   │   │   └── todos.api.ts
+│   │   │
+│   │   ├── assets/
+│   │   │   ├── hero.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── AuthContext.tsx
+│   │   │   └── ThemeContext.tsx
+│   │   │
+│   │   ├── components/
+│   │   │   └── auth/
+│   │   │       └── ProtectedRoute.tsx
+│   │   │
+│   │   ├── layouts/
+│   │   │   └── AppShell.tsx
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   └── RegisterPage.tsx
+│   │   │
+│   │   ├── types/
+│   │   │   ├── auth.ts
+│   │   │   └── todo.ts
+│   │   │
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   └── main.tsx
+│   │
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+│
+├── manage.py
+├── Dockerfile
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── README.md
+└── LICENSE
+```
+
+> `node_modules/` and `dist/` are generated directories and should not be committed to the repository.
+
+---
+
+# Features
+
+## Authentication
+
+* User registration
+* User login
+* JWT authentication
+* Access and refresh tokens
+* Protected routes
+* User account management
+* Secure password handling
+
+## Todo Management
+
+* Create todos
+* View todos
+* Update todos
+* Delete todos
+* Todo status management
+* User-specific todos
+
+## Frontend
+
+* React + TypeScript
+* Vite development environment
+* Authentication context
+* Theme management
+* Protected routes
+* Axios API client
+* Separate API modules
+* Dashboard
+* Login page
+* Registration page
+* Responsive UI
+
+## Backend
+
+* Django REST Framework API
+* PostgreSQL database
+* JWT authentication
+* API filtering
+* Pagination
 * API throttling
-* Centralized exception handling
-* Swagger/OpenAPI documentation
-* Docker and Docker Compose
-* Separate development and production configurations
-* Gunicorn application server
+* OpenAPI documentation
+* Custom exception handling
+* Production/development settings separation
+
+## Background Processing
+
+* Redis message broker
+* Celery workers
+* Celery Beat
+* Periodic task scheduling
+* Database-backed Celery Beat scheduler
+
+## Production Infrastructure
+
+* Docker
+* Docker Compose
+* PostgreSQL container
+* Redis container
+* Gunicorn
 * Nginx reverse proxy
-* HTTPS/TLS support
-* Environment-based configuration
-* Structured application logging
-* Custom Django user model
-* Production-oriented security settings
+* HTTPS configuration
+* Production Django settings
 
 ---
 
 # Architecture
 
 ```text
-                         Client
-                           |
-                           v
-                    +-------------+
-                    |    Nginx    |
-                    | Reverse     |
-                    |   Proxy     |
-                    +------+------+
-                           |
-                           v
-                    +-------------+
-                    |   Gunicorn  |
-                    |    Django   |
-                    | REST API    |
-                    +------+------+
-                           |
-             +-------------+-------------+
-             |                           |
-             v                           v
-      +-------------+              +-------------+
-      | PostgreSQL  |              |    Redis    |
-      |  Database   |              | Broker/Cache|
-      +-------------+              +------+------+
-                                           |
-                                           v
-                                  +----------------+
-                                  |     Celery     |
-                                  |     Worker     |
-                                  +----------------+
-                                           |
-                                           ^
-                                  +----------------+
-                                  |   Celery Beat  |
-                                  |   Scheduler    |
-                                  +----------------+
-```
-
----
-
-# Technology Stack
-
-## Backend
-
-* Python
-* Django
-* Django REST Framework
-* Simple JWT
-* django-filter
-* drf-spectacular
-* Celery
-* django-celery-beat
-
-## Database
-
-* PostgreSQL
-
-## Message Broker / Cache
-
-* Redis
-
-## Web Server
-
-* Gunicorn
-* Nginx
-
-## Containerization
-
-* Docker
-* Docker Compose
-
-## Development Tools
-
-* Git
-* GitHub
-* VS Code / PyCharm / IntelliJ-based IDEs
-* PowerShell / Linux shell
-
----
-
-# Project Structure
-
-```text
-todo-platform/
-│
-├── accounts/
-│   ├── migrations/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── urls.py
-│   └── views.py
-│
-├── todos/
-│   ├── migrations/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── tasks.py
-│   ├── urls.py
-│   └── views.py
-│
-├── config/
-│   ├── settings/
-│   │   ├── base.py
-│   │   ├── development.py
-│   │   └── production.py
-│   │
-│   ├── celery.py
-│   ├── exceptions.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── __init__.py
-│
-├── docker/
-│   └── entrypoint.sh
-│
-├── nginx/
-│   ├── nginx.conf
-│   └── certs/
-│
-├── .env.example
-├── .gitignore
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── manage.py
-├── requirements.txt
-├── README.md
-└── LICENSE
+                    ┌──────────────────┐
+                    │      Browser     │
+                    │   React + Vite   │
+                    └────────┬─────────┘
+                             │
+                             │ HTTP / HTTPS
+                             ▼
+                    ┌──────────────────┐
+                    │      Nginx       │
+                    │ Reverse Proxy     │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Django / DRF     │
+                    │    Gunicorn      │
+                    └──────┬─────┬─────┘
+                           │     │
+                ┌──────────┘     └──────────┐
+                ▼                           ▼
+        ┌──────────────┐             ┌──────────────┐
+        │  PostgreSQL  │             │    Redis     │
+        │   Database   │             │    Broker    │
+        └──────────────┘             └──────┬───────┘
+                                            │
+                                            ▼
+                                    ┌──────────────┐
+                                    │    Celery    │
+                                    │    Worker    │
+                                    └──────────────┘
+                                            │
+                                            ▼
+                                    ┌──────────────┐
+                                    │ Celery Beat  │
+                                    │  Scheduler   │
+                                    └──────────────┘
 ```
 
 ---
 
 # Requirements
 
-You can run the project using Docker, so you do not need to install PostgreSQL, Redis, or Celery directly on your host machine.
+For local development without Docker:
 
-## Required
+* Python 3.x
+* Node.js
+* npm
+* PostgreSQL
+* Redis
 
-* Git
+For Docker-based development:
+
 * Docker
 * Docker Compose
-
-Docker Desktop is the easiest option on Windows.
-
-On Linux, Docker Engine and the Docker Compose plugin are sufficient.
-
-Verify your installation:
-
-```bash
-docker --version
-docker compose version
-git --version
-```
 
 ---
 
 # Clone the Repository
 
-Clone the public repository:
+Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/todo-platform.git
+git clone <YOUR_GITHUB_REPOSITORY_URL>
 ```
 
-Enter the project directory:
+Enter the project:
 
 ```bash
 cd todo-platform
 ```
 
-Replace `<your-username>` with your GitHub username.
-
 ---
 
 # Environment Configuration
 
-Never commit real environment variables, passwords, database credentials, JWT secrets, API keys, or private certificates to GitHub.
-
-The repository should contain an example environment file:
-
-```text
-.env.example
-```
-
-Create your local environment file from it.
-
-### Windows PowerShell
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### Linux/macOS
+Create your environment file from the provided example:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and provide your local configuration.
+On Windows PowerShell:
 
-Example:
-
-```env
-SECRET_KEY=change-this-secret-key
-DEBUG=True
-
-DB_NAME=todo_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=db
-DB_PORT=5432
-
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/1
+```powershell
+Copy-Item .env.example .env
 ```
 
-Do not use example credentials or secrets for an actual production deployment.
+Update `.env` with your local configuration.
+
+Never commit real secrets, passwords, API keys, private certificates, or production environment files.
 
 ---
 
-# Running the Application with Docker
+# Backend Setup Without Docker
 
-The project includes a development Docker Compose configuration.
+Create a virtual environment:
 
-Start all services:
+```powershell
+python -m venv .venv
+```
 
-```bash
+Activate it:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Install Python dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Apply migrations:
+
+```powershell
+python manage.py migrate
+```
+
+Create an administrator:
+
+```powershell
+python manage.py createsuperuser
+```
+
+Start Django:
+
+```powershell
+python manage.py runserver
+```
+
+The backend will normally be available at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+---
+
+# Frontend Setup Without Docker
+
+Move into the frontend directory:
+
+```powershell
+cd frontend
+```
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Start the Vite development server:
+
+```powershell
+npm run dev
+```
+
+The frontend will normally be available at:
+
+```text
+http://localhost:5173/
+```
+
+The React frontend communicates with the Django REST API.
+
+---
+
+# Frontend Production Build
+
+From the `frontend` directory:
+
+```powershell
+npm run build
+```
+
+The production build is generated in:
+
+```text
+frontend/dist/
+```
+
+To preview the production build locally:
+
+```powershell
+npm run preview
+```
+
+`dist/` is generated output and should normally remain outside Git.
+
+---
+
+# Running With Docker Compose
+
+The project provides Docker Compose configurations for development and production.
+
+## Development
+
+From the repository root:
+
+```powershell
 docker compose up --build
 ```
 
-Or run in detached mode:
+Run in detached mode:
 
-```bash
+```powershell
 docker compose up --build -d
 ```
 
-Check running containers:
+View running containers:
 
-```bash
+```powershell
 docker compose ps
 ```
 
 View logs:
 
-```bash
+```powershell
 docker compose logs -f
 ```
 
----
+Stop the application:
 
-# Development Architecture
-
-The development environment contains:
-
-```text
-web
-├── Django
-└── Gunicorn
-
-worker
-└── Celery Worker
-
-beat
-└── Celery Beat
-
-db
-└── PostgreSQL
-
-redis
-└── Redis
-```
-
-The development configuration exposes the application on:
-
-```text
-http://localhost:8000
-```
-
-PostgreSQL is available to the host through the configured development port.
-
-Redis is also exposed for development purposes.
-
----
-
-# Database Migrations
-
-Run migrations:
-
-```bash
-docker compose run --rm web python manage.py migrate
-```
-
-Create migrations after modifying models:
-
-```bash
-docker compose run --rm web python manage.py makemigrations
-```
-
-Apply migrations:
-
-```bash
-docker compose run --rm web python manage.py migrate
-```
-
-Check migration status:
-
-```bash
-docker compose run --rm web python manage.py showmigrations
+```powershell
+docker compose down
 ```
 
 ---
 
-# Create a Superuser
+# Database Migrations With Docker
 
-Create a Django admin user:
+Run migrations inside the Django container:
 
-```bash
-docker compose run --rm web python manage.py createsuperuser
+```powershell
+docker compose exec web python manage.py migrate
 ```
 
-Follow the prompts.
+Create a superuser:
 
-Django Admin will then be available at:
-
-```text
-http://localhost:8000/admin/
+```powershell
+docker compose exec web python manage.py createsuperuser
 ```
-
----
-
-# API Documentation
-
-The project uses **drf-spectacular** for OpenAPI schema generation.
-
-The API documentation endpoints configured by the project can be accessed through the application's documentation routes.
-
-Typical endpoints include:
-
-```text
-/api/schema/
-/api/docs/
-/api/redoc/
-```
-
-The exact URL configuration is defined in:
-
-```text
-config/urls.py
-```
-
----
-
-# Authentication
-
-The API uses **JWT authentication**.
-
-The authentication flow is:
-
-```text
-User
- |
- | Register/Login
- v
-Authentication API
- |
- v
-Access Token + Refresh Token
- |
- v
-Authenticated API Requests
- |
- v
-Todo APIs
-```
-
-Access tokens are short-lived, while refresh tokens provide a mechanism for obtaining new access tokens.
-
-Refresh token rotation and blacklisting are enabled.
-
-Clients should send the access token using:
-
-```http
-Authorization: Bearer <access-token>
-```
-
----
-
-# Todo API
-
-Authenticated users can manage their own todos.
-
-Typical operations include:
-
-```text
-POST   /api/todos/
-GET    /api/todos/
-GET    /api/todos/<id>/
-PUT    /api/todos/<id>/
-PATCH  /api/todos/<id>/
-DELETE /api/todos/<id>/
-```
-
-The exact routes are defined in:
-
-```text
-todos/urls.py
-```
-
----
-
-# Filtering, Searching and Ordering
-
-The API is configured with Django REST Framework filtering backends.
-
-Supported capabilities include:
-
-* Filtering
-* Searching
-* Ordering
-* Pagination
-
-The available fields depend on the Todo API implementation.
-
----
-
-# Pagination
-
-The API uses page-number pagination.
-
-The configured default page size is:
-
-```text
-20
-```
-
-A typical paginated response follows the structure:
-
-```json
-{
-    "count": 100,
-    "next": "...",
-    "previous": null,
-    "results": []
-}
-```
-
----
-
-# API Throttling
-
-The application includes DRF request throttling.
-
-Current configuration:
-
-```text
-Anonymous users:
-20 requests/minute
-
-Authenticated users:
-120 requests/minute
-```
-
-This provides a basic layer of protection against excessive API requests.
 
 ---
 
 # Celery
 
-Celery is used for asynchronous background processing.
+The project uses Redis as the Celery broker and result backend.
 
-The project contains:
+The development/production Compose configuration includes:
 
 ```text
+Django Web
+     │
+     ▼
+   Redis
+     │
+     ▼
 Celery Worker
-Celery Beat
-Redis Broker
 ```
 
-Start the complete environment:
+Celery Beat is used for scheduled background tasks.
 
-```bash
-docker compose up -d
-```
+Check the running services:
 
-Check Celery worker logs:
-
-```bash
-docker compose logs -f worker
-```
-
-Check Celery Beat logs:
-
-```bash
-docker compose logs -f beat
+```powershell
+docker compose ps
 ```
 
 ---
 
-# Celery Beat
+# API
 
-Celery Beat provides scheduled task execution.
+The Django backend exposes REST API endpoints for authentication and todo management.
 
-The project uses:
+The frontend communicates with the backend through Axios.
+
+Typical API structure:
 
 ```text
-django-celery-beat
+/api/auth/
+/api/todos/
 ```
 
-This allows periodic tasks to be managed through Django's database-backed scheduler.
-
-Periodic tasks can be managed through Django Admin when configured.
+Authentication uses JWT access and refresh tokens.
 
 ---
 
-# Redis
+# API Documentation
 
-Redis is used as the Celery message broker and result backend.
+The project uses OpenAPI documentation through Django REST Framework documentation tooling.
 
-The configured services use Redis databases:
+When running the development server, API documentation is available through the configured documentation endpoint.
+
+Check the current Django configuration for the exact documentation route.
+
+---
+
+# Django Admin
+
+The Django admin interface is available at:
 
 ```text
-redis://redis:6379/0
-redis://redis:6379/1
+/admin/
 ```
 
-Redis is managed automatically by Docker Compose.
-
-Check Redis:
-
-```bash
-docker compose exec redis redis-cli ping
-```
-
-Expected response:
+For local development:
 
 ```text
-PONG
+http://127.0.0.1:8000/admin/
+```
+
+Create an administrator with:
+
+```powershell
+python manage.py createsuperuser
 ```
 
 ---
 
-# PostgreSQL
+# Production Deployment
 
-PostgreSQL is the primary application database.
-
-The development environment uses the PostgreSQL Docker container rather than requiring PostgreSQL to be installed directly on the host.
-
-Check the database container:
-
-```bash
-docker compose ps db
-```
-
-View database logs:
-
-```bash
-docker compose logs -f db
-```
-
----
-
-# Django Management Commands
-
-Run Django commands inside the web container.
-
-## Django shell
-
-```bash
-docker compose exec web python manage.py shell
-```
-
-## Check configuration
-
-```bash
-docker compose exec web python manage.py check
-```
-
-## Check deployment configuration
-
-```bash
-docker compose exec web python manage.py check --deploy
-```
-
-## Collect static files
-
-```bash
-docker compose exec web python manage.py collectstatic --noinput
-```
-
----
-
-# Running Tests
-
-Run the project's test suite using Django's test runner:
-
-```bash
-docker compose run --rm web python manage.py test
-```
-
-If additional testing frameworks are configured, run them according to the project's test configuration.
-
-Before creating a pull request, verify:
-
-```bash
-docker compose run --rm web python manage.py check
-docker compose run --rm web python manage.py test
-```
-
----
-
-# Production Configuration
-
-The project contains a separate production Compose configuration:
+The project includes a dedicated production configuration:
 
 ```text
 docker-compose.prod.yml
 ```
 
-Production services include:
-
-```text
-nginx
-web
-worker
-beat
-db
-redis
-```
-
-The production architecture is:
+The production architecture uses:
 
 ```text
 Internet
-    |
-    v
-  Nginx
-    |
-    v
+   │
+   ▼
+ Nginx
+   │
+   ▼
 Gunicorn
-    |
-    v
+   │
+   ▼
 Django
-    |
-    +----------> PostgreSQL
-    |
-    +----------> Redis
-                    |
-                    +--> Celery Worker
-                    |
-                    +--> Celery Beat
+   │
+   ├── PostgreSQL
+   │
+   └── Redis
+          │
+          ├── Celery Worker
+          └── Celery Beat
 ```
+
+Production Django configuration includes security settings such as:
+
+* `DEBUG=False`
+* Configurable `ALLOWED_HOSTS`
+* Secure cookies
+* HTTPS-related settings
+* HSTS
+* Frame protection
+* Production logging
+* SMTP configuration through environment variables
+
+Production secrets should always be supplied through environment variables or a secure secret-management system.
 
 ---
 
-# Production Environment
+# Building the Frontend for Deployment
 
-Create a production environment file locally.
-
-For example:
+From:
 
 ```text
-.env.production
+todo-platform/frontend
 ```
 
-This file should contain production-specific values such as:
+run:
 
-```env
-SECRET_KEY=<strong-production-secret>
-
-DEBUG=False
-
-ALLOWED_HOSTS=<your-domain>
-
-DB_NAME=<production-database>
-DB_USER=<production-user>
-DB_PASSWORD=<strong-database-password>
-DB_HOST=db
-DB_PORT=5432
-
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/1
-
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=<smtp-server>
-EMAIL_PORT=587
-EMAIL_HOST_USER=<email-user>
-EMAIL_HOST_PASSWORD=<email-password>
-EMAIL_USE_TLS=True
+```powershell
+npm ci
+npm run build
 ```
 
-**Never commit `.env.production` to GitHub.**
-
----
-
-# Running Production Containers
-
-Build the production images:
-
-```bash
-docker compose -f docker-compose.prod.yml build
-```
-
-Start the production environment:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d
-```
-
-Check services:
-
-```bash
-docker compose -f docker-compose.prod.yml ps
-```
-
-View logs:
-
-```bash
-docker compose -f docker-compose.prod.yml logs -f
-```
-
----
-
-# Production Database Migration
-
-Run migrations:
-
-```bash
-docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate
-```
-
-Create a superuser:
-
-```bash
-docker compose -f docker-compose.prod.yml run --rm web python manage.py createsuperuser
-```
-
-Collect static files:
-
-```bash
-docker compose -f docker-compose.prod.yml run --rm web python manage.py collectstatic --noinput
-```
-
----
-
-# Gunicorn
-
-The production application server is Gunicorn.
-
-The production web container runs Django through:
+This generates:
 
 ```text
-config.wsgi:application
+frontend/dist/
 ```
 
-with multiple workers.
-
-This provides a more production-oriented application server than Django's development server.
+The generated frontend assets can then be served through the configured production infrastructure.
 
 ---
 
-# Nginx
+# Docker Services
 
-Nginx acts as the reverse proxy in the production configuration.
+The production Compose configuration contains the following major services:
 
-Responsibilities include:
-
-* HTTP request handling
-* HTTPS termination
-* Reverse proxying
-* TLS certificate handling
-* Request forwarding
-* Client request size limits
-* Connection timeouts
-
-The Nginx configuration is located at:
-
-```text
-nginx/nginx.conf
-```
-
----
-
-# HTTPS
-
-The production configuration expects TLS certificates under:
-
-```text
-nginx/certs/
-```
-
-The current local configuration uses:
-
-```text
-localhost.crt
-localhost.key
-```
-
-For a real public deployment, use a valid certificate issued for your actual domain.
-
-**Never commit private TLS keys to GitHub.**
-
-Add certificate files to `.gitignore` when appropriate.
+| Service  | Purpose                                     |
+| -------- | ------------------------------------------- |
+| `web`    | Django application running through Gunicorn |
+| `worker` | Celery background worker                    |
+| `beat`   | Celery periodic task scheduler              |
+| `db`     | PostgreSQL database                         |
+| `redis`  | Redis broker/backend                        |
+| `nginx`  | Reverse proxy and HTTPS termination         |
 
 ---
 
 # Security
 
-The production configuration enables several Django security mechanisms, including:
+Before publishing the repository:
 
-* `DEBUG=False`
-* Secure session cookies
-* Secure CSRF cookies
-* HTTPS redirect
-* HSTS
-* `X-Frame-Options: DENY`
-* Content-type sniffing protection
-* Referrer policy
-* Proxy-aware HTTPS configuration
-* JWT authentication
-* API throttling
+### Never commit
 
-Production secrets are supplied through environment variables rather than being hard-coded into the source code.
-
----
-
-# Docker Commands
-
-## Start
-
-```bash
-docker compose up -d
+```text
+.env
+.env.production
+*.pem
+*.key
+private certificates
+database passwords
+API keys
+secret keys
+node_modules/
 ```
 
-## Stop
-
-```bash
-docker compose down
-```
-
-## Rebuild
-
-```bash
-docker compose build --no-cache
-```
-
-## Restart
-
-```bash
-docker compose restart
-```
-
-## View containers
-
-```bash
-docker compose ps
-```
-
-## View logs
-
-```bash
-docker compose logs -f
-```
-
-## View one service
-
-```bash
-docker compose logs -f web
-```
-
-```bash
-docker compose logs -f worker
-```
-
-```bash
-docker compose logs -f beat
-```
-
-## Open a shell inside the web container
-
-```bash
-docker compose exec web sh
-```
-
-## Remove containers
-
-```bash
-docker compose down
-```
-
-To also remove Docker volumes:
-
-```bash
-docker compose down -v
-```
-
-**Warning:** Removing volumes can permanently delete local database data.
-
----
-
-# Development vs Production
-
-| Feature            | Development          | Production                |
-| ------------------ | -------------------- | ------------------------- |
-| Django DEBUG       | Enabled              | Disabled                  |
-| Application server | Gunicorn             | Gunicorn                  |
-| Database           | PostgreSQL container | PostgreSQL container      |
-| Redis              | Redis container      | Redis container           |
-| Celery             | Enabled              | Enabled                   |
-| Celery Beat        | Enabled              | Enabled                   |
-| Reverse Proxy      | Not required         | Nginx                     |
-| HTTPS              | Not required         | Enabled                   |
-| Environment        | `.env`               | `.env.production`         |
-| Configuration      | `development.py`     | `production.py`           |
-| Compose file       | `docker-compose.yml` | `docker-compose.prod.yml` |
-
----
-
-# Environment Variables
-
-Example environment files should contain placeholders rather than real credentials.
-
-Recommended repository files:
+### Use
 
 ```text
 .env.example
 ```
 
-Local-only files:
-
-```text
-.env
-.env.production
-```
-
-These should not be committed.
-
-A public repository should never contain:
-
-```text
-Passwords
-API keys
-JWT secrets
-Database credentials
-Private SSH keys
-TLS private keys
-Cloud credentials
-SMTP passwords
-```
+for documenting required environment variables without exposing real values.
 
 ---
 
-# Git Workflow
+# Git Ignore
 
-Clone the repository:
-
-```bash
-git clone https://github.com/<your-username>/todo-platform.git
-```
-
-Create a feature branch:
-
-```bash
-git checkout -b feature/<feature-name>
-```
-
-Check changes:
-
-```bash
-git status
-```
-
-Stage changes:
-
-```bash
-git add .
-```
-
-Commit:
-
-```bash
-git commit -m "Add <feature-name>"
-```
-
-Push:
-
-```bash
-git push origin feature/<feature-name>
-```
-
----
-
-# Recommended `.gitignore`
-
-The public repository should ignore sensitive and generated files.
-
-At minimum, make sure the following are ignored:
+The repository should ignore generated and sensitive files such as:
 
 ```gitignore
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-
-# Virtual environment
 .venv/
-venv/
-env/
+__pycache__/
+*.pyc
 
-# Environment files
 .env
 .env.*
-!.env.example
 
-# Django
-*.sqlite3
-media/
-staticfiles/
+frontend/node_modules/
+frontend/dist/
 
-# IDE
 .vscode/
 .idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Python tooling
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Docker
-*.log
-
-# Nginx / TLS
-nginx/certs/*.key
-nginx/certs/*.pem
 ```
 
-Review your `.gitignore` before pushing the project publicly.
+`frontend/package-lock.json` should remain committed.
 
 ---
 
-# Troubleshooting
+# Development Workflow
 
-## Check all containers
+A typical development workflow is:
 
-```bash
-docker compose ps
+```text
+1. Clone repository
+       ↓
+2. Configure .env
+       ↓
+3. Start PostgreSQL + Redis
+       ↓
+4. Run Django backend
+       ↓
+5. Install frontend dependencies
+       ↓
+6. Run React/Vite frontend
+       ↓
+7. Develop and test
+       ↓
+8. Build frontend
+       ↓
+9. Run Docker Compose
+       ↓
+10. Deploy
 ```
 
-## Check application logs
+---
 
-```bash
-docker compose logs -f web
+# Useful Commands
+
+## Django
+
+```powershell
+python manage.py runserver
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py shell
 ```
 
-## Check PostgreSQL
+## Frontend
 
-```bash
-docker compose logs -f db
+```powershell
+cd frontend
+
+npm install
+npm run dev
+npm run build
+npm run preview
 ```
 
-## Check Redis
+## Docker
 
-```bash
-docker compose logs -f redis
-```
-
-## Check Celery Worker
-
-```bash
-docker compose logs -f worker
-```
-
-## Check Celery Beat
-
-```bash
-docker compose logs -f beat
-```
-
-## Run Django system checks
-
-```bash
-docker compose run --rm web python manage.py check
-```
-
-## Rebuild containers
-
-```bash
-docker compose build --no-cache
+```powershell
+docker compose up --build
 docker compose up -d
-```
-
----
-
-# Common Docker Reset
-
-If the development environment becomes inconsistent, you can recreate the containers:
-
-```bash
+docker compose ps
+docker compose logs -f
 docker compose down
-docker compose up --build -d
-```
-
-For a complete local reset including database volumes:
-
-```bash
-docker compose down -v
-docker compose up --build -d
-```
-
-**Use `down -v` carefully because it deletes the Docker-managed database volume.**
-
----
-
-# Application Startup Flow
-
-When the application starts:
-
-```text
-Docker Compose
-      |
-      v
-PostgreSQL starts
-      |
-      v
-Redis starts
-      |
-      v
-Database health check
-      |
-      v
-Django container starts
-      |
-      v
-Entrypoint waits for PostgreSQL
-      |
-      v
-Gunicorn starts
-      |
-      +--------------------+
-      |                    |
-      v                    v
-Celery Worker        Celery Beat
-      |                    |
-      +---------+----------+
-                |
-                v
-              Redis
-```
-
-This allows the application services to operate as independent containers while communicating through the Docker Compose network.
-
----
-
-# API Request Flow
-
-A typical authenticated Todo request follows this flow:
-
-```text
-Client
-  |
-  | HTTP Request + JWT
-  v
-Nginx
-  |
-  v
-Gunicorn
-  |
-  v
-Django REST Framework
-  |
-  +--> JWT Authentication
-  |
-  +--> Permission Check
-  |
-  +--> Throttling
-  |
-  +--> Serializer
-  |
-  +--> Todo View
-  |
-  v
-PostgreSQL
-  |
-  v
-JSON Response
 ```
 
 ---
 
-# Background Task Flow
+# Project Status
 
-Asynchronous work follows:
+This project is being developed as a production-oriented full-stack application and is intended to demonstrate practical experience with:
 
-```text
-Django Application
-       |
-       | enqueue task
-       v
-     Redis
-       |
-       v
- Celery Worker
-       |
-       v
-Background Task
-       |
-       v
-PostgreSQL / External Service
-```
-
-Scheduled work follows:
-
-```text
-Celery Beat
-    |
-    | scheduled task
-    v
-  Redis
-    |
-    v
-Celery Worker
-    |
-    v
-Task Execution
-```
-
----
-
-# Project Goals
-
-This project is intended to demonstrate practical backend engineering concepts rather than only basic CRUD functionality.
-
-Key engineering goals include:
-
-* Clean project organization
-* Separation of development and production settings
-* RESTful API design
-* Secure authentication
-* Relational database design
+* Full-stack development
+* REST API development
+* Authentication and authorization
+* React application architecture
+* PostgreSQL
+* Redis
 * Asynchronous processing
-* Scheduled background jobs
-* Containerized services
-* Reverse proxy architecture
-* Environment-based configuration
-* Production-oriented security
-* Logging and observability foundations
-* Reproducible development environments
-
----
-
-# Future Improvements
-
-Potential future improvements include:
-
-* Automated CI/CD pipeline
-* Automated test coverage reporting
-* Redis caching for frequently accessed data
-* Advanced monitoring
-* Prometheus metrics
-* Grafana dashboards
-* Centralized log aggregation
-* Rate limiting at the Nginx layer
-* Cloud deployment
-* Managed PostgreSQL
-* Managed Redis
-* Object storage for media
-* Container image publishing
-* Automated database backups
-* Horizontal application scaling
-* Kubernetes deployment
-* Infrastructure as Code
-
----
-
-# Contributing
-
-Contributions are welcome.
-
-To contribute:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Add or update tests where appropriate.
-5. Run the project's checks.
-6. Commit your changes.
-7. Push your branch.
-8. Open a Pull Request.
-
-Example:
-
-```bash
-git checkout -b feature/add-task-filter
-```
-
-Then:
-
-```bash
-git add .
-git commit -m "Add task filtering"
-git push origin feature/add-task-filter
-```
+* Docker
+* Nginx
+* Production configuration
+* Deployment practices
 
 ---
 
@@ -1359,14 +739,8 @@ See the [`LICENSE`](LICENSE) file for the complete license text.
 
 # Author
 
-**Your Name**
+**<YOUR NAME>**
 
-GitHub: `https://github.com/vedantkalyankar`
+`GitHub:` https://www.github.com/vedantkalyankar
 
----
-
-# Disclaimer
-
-This project is provided for educational, portfolio, and development purposes.
-
-Before deploying the application to a real production environment, review the complete infrastructure, security configuration, secrets management, database backup strategy, monitoring, TLS configuration, domain configuration, and operational requirements for your deployment environment.
+LinkedIn: https://linkedin.com/in/vedant-sudo
